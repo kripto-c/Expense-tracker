@@ -66,15 +66,15 @@ expense-tracker/
 │ └── server.js # Configura Express, middlewares, monta rutas /api
 └── node_modules/
 
-````
-
+````markdown
 ## 🔐 Autenticación y contexto
 
 ### Middleware `setProvider`
 
 ```js
 // src/middlewares/setProvider.js
-req.provider = 'rest';
+req.provider = 'rest'
+```
 ````
 
 ### Middleware `globalAuth`
@@ -225,7 +225,3 @@ Endpoint sugerido: `POST /api/users/:userId/roles` con body `{ roleId }`. Implem
 ---
 
 _Última actualización: 2026-05-06_
-
-```
-
-```
