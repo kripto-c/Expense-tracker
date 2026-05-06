@@ -37,7 +37,7 @@ model Group {
 model Role {
   id          String   @id @default(uuid())
   name        String   @unique
-  description String?
+  description String?  @default("")
   permissions Json     // Formato: [ { "actions": ["create","read"], "subject": ["groups","expenses"] }, ... ]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

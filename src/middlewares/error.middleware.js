@@ -7,15 +7,21 @@ function errorHandler(err, req, res, next) {
   if (err.code === 'P2002') {
     status = 409
     name = 'Conflict'
-    message = `El campo ${err.meta?.target?.join(', ')} ya existe`
+    let fields = []
+
+    // Para Prisma 7+ (estructura anidada)
+    if (err.meta?.driverAdapterError?.cause?.constraint?.fields) {
+      fields = err.meta.driverAdapterError.cause.constraint.fields
+    }
+    // Fallback para versiones anteriores
+    else if (err.meta?.target) {
+      fields = err.meta.target
+    }
+
+    const fieldName = fields.join(', ') || 'campo desconocido'
+    message = `El campo ${fieldName} esta duplicado`
     className = 'conflict'
-    data = { fields: err.meta?.target }
-  } else if (err.code === 'P2025') {
-    status = 404
-    name = 'NotFound'
-    message = 'Registro no encontrado'
-    className = 'not-found'
-    data = {}
+    data = { fields }
   }
   // 2. Mapear errores de Joi
   else if (err.isJoi) {
