@@ -5,8 +5,8 @@ const { assignCreator, checkOwnership } = require('../hooks/authorize')
 const { POST, PATCH } = require('../schemas/group.schema')
 
 class GroupService extends BaseService {
-  constructor() {
-    super(prisma.group, 'group')
+  constructor(app) {
+    super(prisma.group, 'group', app)
 
     // Hooks para create: validación + asignar creador
     this.before('create', validate(POST), assignCreator('userId'))
@@ -19,4 +19,4 @@ class GroupService extends BaseService {
   }
 }
 
-module.exports = new GroupService()
+module.exports = (app) => new GroupService(app)

@@ -6,8 +6,8 @@ const { POST, PATCH } = require('../schemas/roles.schema')
 const { checkPermission } = require('../hooks/permissions')
 
 class RolesService extends BaseService {
-  constructor() {
-    super(prisma.role, 'roles')
+  constructor(app) {
+    super(prisma.role, 'roles', app)
 
     // Hooks para create: validación
     this.before('create', validate(POST))
@@ -17,4 +17,4 @@ class RolesService extends BaseService {
   }
 }
 
-module.exports = new RolesService()
+module.exports = (app) => new RolesService(app)

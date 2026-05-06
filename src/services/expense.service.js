@@ -6,8 +6,8 @@ const { POST, PATCH } = require('../schemas/expense.schema')
 const { createExpenseShares, restrictToPayer } = require('../hooks/expense.hook')
 
 class ExpenseService extends BaseService {
-  constructor() {
-    super(prisma.expense, 'expense')
+  constructor(app) {
+    super(prisma.expense, 'expense', app)
 
     // Hooks para create: validación + asignar creador
     this.before('create', validate(POST), assignCreator('paidById'))
@@ -21,4 +21,4 @@ class ExpenseService extends BaseService {
   }
 }
 
-module.exports = new ExpenseService()
+module.exports = (app) => new ExpenseService(app)

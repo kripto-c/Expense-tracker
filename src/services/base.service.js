@@ -11,9 +11,10 @@ const methodToAction = {
 }
 
 class BaseService {
-  constructor(model, serviceName, excludeMethods = []) {
+  constructor(model, serviceName = '', app, excludeMethods = []) {
     this.model = model
     this.serviceName = serviceName
+    this.app = app
     // Metodos a excluir de los permisos automáticos
     this.excludeMethods = excludeMethods
     this.beforeHooks = {
@@ -82,7 +83,7 @@ class BaseService {
   }
 
   async _runErrorHooks(method, error, originalContext) {
-    let ctx = { error, method, originalContext, service: this }
+    let ctx = { error, method, originalContext, service: this, app: this.app }
     for (const hook of this.errorHooks[method]) {
       try {
         ctx = await hook(ctx)
@@ -97,7 +98,7 @@ class BaseService {
   async find(params = {}) {
     try {
       const user = getCurrentUser()
-      let context = { method: 'find', params, service: this, result: null, user: user }
+      let context = { method: 'find', params, service: this, result: null, user: user, app: this.app }
       context = await this._runHooks(this.beforeHooks.find, context)
 
       // extraer params
@@ -169,7 +170,7 @@ class BaseService {
   async get(id, params = {}) {
     try {
       const user = getCurrentUser()
-      let context = { method: 'get', id, params, service: this, result: null, user: user }
+      let context = { method: 'get', id, params, service: this, result: null, user: user, app: this.app }
       context = await this._runHooks(this.beforeHooks.get, context)
       const record = await this.model.findUnique({ where: { id } })
       if (!record) throw new Error(`Record with id ${id} not found`)
@@ -184,7 +185,7 @@ class BaseService {
   async create(data, params = {}) {
     try {
       const user = getCurrentUser()
-      let context = { method: 'create', data, params, service: this, result: null, user: user }
+      let context = { method: 'create', data, params, service: this, result: null, user: user, app: this.app }
       context = await this._runHooks(this.beforeHooks.create, context)
       const result = await this.model.create({ data: context.data })
       context.result = result
@@ -198,7 +199,7 @@ class BaseService {
   async patch(id, data, params = {}) {
     try {
       const user = getCurrentUser()
-      let context = { method: 'patch', id, data, params, service: this, result: null, user: user }
+      let context = { method: 'patch', id, data, params, service: this, result: null, user: user, app: this.app }
       context = await this._runHooks(this.beforeHooks.patch, context)
       const result = await this.model.update({ where: { id }, data: context.data })
       context.result = result
@@ -212,7 +213,7 @@ class BaseService {
   async remove(id, params = {}) {
     try {
       const user = getCurrentUser()
-      let context = { method: 'remove', id, params, service: this, result: null, user: user }
+      let context = { method: 'remove', id, params, service: this, result: null, user: user, app: this.app }
       context = await this._runHooks(this.beforeHooks.remove, context)
       const record = await this.model.findUnique({ where: { id } })
       if (!record) throw new Error(`Record with id ${id} not found`)

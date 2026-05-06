@@ -2,13 +2,14 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const prisma = require('./prisma')
-const app = express()
+const app = require('./app')
 const groupRoutes = require('./routes/group.routes')
 const authRoutes = require('./routes/auth.routes')
 const apiRouter = require('./routes/index')
 const globalAuth = require('./middlewares/auth.global')
 const contextMiddleware = require('./middlewares/context.middleware')
 const { errorHandler } = require('./middlewares/error.middleware')
+const { registerServices } = require('./services')
 
 app.use(cors())
 app.use(express.json())
@@ -16,6 +17,9 @@ app.use(express.json())
 // Middleware global de autenticación
 app.use(globalAuth)
 app.use(contextMiddleware) // a partir de aquí, dentro de la misma petición, getCurrentUser() devolverá el usuario
+
+//Servicios
+registerServices(app)
 
 // Rutas
 app.use('/api', apiRouter)

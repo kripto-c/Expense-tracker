@@ -1,10 +1,10 @@
-const userService = require('../services/user.service')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 const { NotAuthenticated, BadRequest, Conflict } = require('../errors')
 
 exports.register = async (req, res, next) => {
   try {
+    const userService = req.app.getService('user')
     const { email, password } = req.body
     if (!email || !password) {
       return next(new BadRequest('Email y password requeridos'))
@@ -24,6 +24,7 @@ exports.register = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   try {
+    const userService = req.app.getService('user')
     const { email, password } = req.body
     if (!email || !password) {
       return next(new BadRequest('Email y password requeridos'))

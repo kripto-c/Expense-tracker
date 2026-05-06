@@ -4,8 +4,8 @@ const bcrypt = require('bcrypt')
 const { hashPassword, generateUserName } = require('../hooks/user.hook')
 
 class UserService extends BaseService {
-  constructor() {
-    super(prisma.user, 'user', ['create']) // Excluir create de permisos automáticos
+  constructor(app) {
+    super(prisma.user, 'user', app, ['create']) // Excluir create de permisos automáticos
 
     // Hook before create: hashear password
     this.before('create', generateUserName, hashPassword)
@@ -29,4 +29,4 @@ class UserService extends BaseService {
   }
 }
 
-module.exports = new UserService()
+module.exports = (app) => new UserService(app)
