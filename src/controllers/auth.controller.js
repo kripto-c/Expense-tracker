@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 const { NotAuthenticated, BadRequest, Conflict } = require('../errors')
-
+const EXPIRES_IN = process.env.EXPIRES_IN
 exports.register = async (req, res, next) => {
   try {
     const userService = req.app.getService('user')
@@ -13,7 +13,12 @@ exports.register = async (req, res, next) => {
     if (existing) {
       return next(new Conflict('Email ya registrado'))
     }
-    const user = await userService.create({ email, password })
+    const user = await userService.create(
+      { email, password },
+      {
+        provider: req.provider,
+      },
+    )
     // No devolver el password
     const { password: _, ...userWithoutPassword } = user
     res.status(201).json(userWithoutPassword)
@@ -40,7 +45,7 @@ exports.login = async (req, res, next) => {
 
     const roles = await userService.getRoles(user.id)
 
-    const token = jwt.sign({ userId: user.id, email: user.email, roles }, process.env.JWT_SECRET, { expiresIn: '7d' })
+    const token = jwt.sign({ userId: user.id, email: user.email, roles }, process.env.JWT_SECRET, { expiresIn: EXPIRES_IN })
     res.json({ accessToken: token, user: { id: user.id, email: user.email, roles } })
   } catch (error) {
     next(error)

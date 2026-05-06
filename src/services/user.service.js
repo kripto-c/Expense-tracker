@@ -1,7 +1,7 @@
 const BaseService = require('./base.service')
 const prisma = require('../prisma')
 const bcrypt = require('bcrypt')
-const { hashPassword, generateUserName } = require('../hooks/user.hook')
+const { hashPassword, generateUserName, assignDefaultRole } = require('../hooks/user.hook')
 
 class UserService extends BaseService {
   constructor(app) {
@@ -9,6 +9,8 @@ class UserService extends BaseService {
 
     // Hook before create: hashear password
     this.before('create', generateUserName, hashPassword)
+
+    this.after('create', assignDefaultRole)
   }
 
   async findByEmail(email) {

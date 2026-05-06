@@ -11,4 +11,8 @@ function getCurrentUser() {
   return store?.user || null
 }
 
-module.exports = { runWithContext, getCurrentUser }
+function getCurrentContext() {
+  return asyncLocalStorage.getStore() || {}
+}
+
+module.exports = { runWithContext, getCurrentUser, getCurrentContext }

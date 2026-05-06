@@ -40,11 +40,15 @@ function hasPermission(perms, action, subject) {
 
 function checkPermission(action, subject) {
   return async (context) => {
-    // ✅ Accedemos directamente a context.user.userId
+    // Permitir acceso sin permisos para llamadas internas (sin provider)
+    if (context.params.provider === undefined) {
+      return context
+    }
+    //  Accedemos directamente a context.user.userId
     const userId = context.user?.userId
     if (!userId) throw new NotAuthenticated('No autenticado')
 
-    // ✅ Cache en el propio contexto (no en params)
+    //  Cache en el propio contexto (no en params)
     if (!context._permissions) {
       context._permissions = await getUserPermissions(userId)
     }

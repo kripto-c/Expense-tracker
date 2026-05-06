@@ -98,10 +98,9 @@ class BaseService {
   async find(params = {}) {
     try {
       const user = getCurrentUser()
-      let context = { method: 'find', params, service: this, result: null, user: user, app: this.app }
+      let context = { method: 'find', params, service: this, result: null, user, app: this.app }
       context = await this._runHooks(this.beforeHooks.find, context)
 
-      // extraer params
       const query = context.params.query || {}
       const { $limit, $skip, $select } = query
       let $sort = null
@@ -112,25 +111,28 @@ class BaseService {
           $sort = {}
           for (const key of sortKeys) {
             const field = key.match(/\$sort\[(.*?)\]/)?.[1]
-            if (field) {
-              $sort[field] = parseInt(query[key])
-            }
+            if (field) $sort[field] = parseInt(query[key])
           }
         } else if (query.$sort && typeof query.$sort === 'object') {
-          // También permitir formato JSON string? (opcional)
           $sort = query.$sort
         }
       }
 
-      //options prisma
       const prismaOptions = {}
 
-      if ($limit !== undefined) {
-        prismaOptions.take = parseInt($limit)
+      //  FILTROS WHERE
+      if (query && typeof query === 'object') {
+        const where = {}
+        for (const [key, value] of Object.entries(query)) {
+          if (!key.startsWith('$')) {
+            where[key] = value
+          }
+        }
+        if (Object.keys(where).length) prismaOptions.where = where
       }
-      if ($skip !== undefined) {
-        prismaOptions.skip = parseInt($skip)
-      }
+
+      if ($limit !== undefined) prismaOptions.take = parseInt($limit)
+      if ($skip !== undefined) prismaOptions.skip = parseInt($skip)
       if ($sort && typeof $sort === 'object') {
         prismaOptions.orderBy = Object.entries($sort).map(([field, order]) => ({
           [field]: order === 1 ? 'asc' : 'desc',
@@ -143,23 +145,14 @@ class BaseService {
         }, {})
       }
 
-      // ejecutar consulta con opciones
       const result = await this.model.findMany(prismaOptions)
+      const total = await this.model.count({ where: prismaOptions.where })
 
-      const total = await this.model.count()
-
-      const objectResponse = {
-        data: result,
-        total,
-      }
-
+      const objectResponse = { data: result, total }
       if ($limit !== undefined) objectResponse.limit = parseInt($limit)
       if ($skip !== undefined) objectResponse.skip = parseInt($skip)
 
-      context.result = {
-        ...objectResponse,
-      }
-
+      context.result = objectResponse
       context = await this._runHooks(this.afterHooks.find, context)
       return context.result
     } catch (error) {

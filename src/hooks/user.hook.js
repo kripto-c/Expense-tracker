@@ -1,6 +1,5 @@
-// src/hooks/user.js
 const bcrypt = require('bcrypt')
-
+const { NotFound } = require('../errors')
 const generateUserName = async (context) => {
   const email = context.data.email
   if (!email) return context
@@ -20,4 +19,25 @@ const hashPassword = async (context) => {
   return context
 }
 
-module.exports = { generateUserName, hashPassword }
+const assignDefaultRole = async (context, role = 'user') => {
+  // Obtener el servicio de roles y el de userRole desde el contexto
+  const roleService = context.app.getService('role')
+  const userRoleService = context.app.getService('userRole')
+
+  const defaultRole = await roleService.find({ query: { name: role, $select: ['id'] } })
+  if (defaultRole.data.length === 0) {
+    throw new NotFound(`Rol por defecto "${role}" no encontrado`, 500)
+  }
+  const roleId = defaultRole.data[0].id
+
+  await userRoleService.create({
+    userId: context.result.id,
+    roleId: roleId,
+  })
+
+  // agregar rol al resultado
+  context.result.roles = [role]
+  return context
+}
+
+module.exports = { generateUserName, hashPassword, assignDefaultRole }
