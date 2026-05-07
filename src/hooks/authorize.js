@@ -1,9 +1,10 @@
+const { Forbidden, NotAuthenticated, NotFound } = require('../errors')
 // Asigna automáticamente el userId del usuario autenticado (ahora desde context.user)
 const assignCreator =
   (field = 'userId') =>
   async (ctx) => {
     const userId = ctx.user?.userId
-    if (!userId) throw new Error('Usuario no autenticado')
+    if (!userId) throw new NotAuthenticated('Usuario no autenticado')
     ctx.data[field] = userId
     return ctx
   }
@@ -13,11 +14,11 @@ const checkOwnership =
   (field = 'userId') =>
   async (ctx) => {
     const userId = ctx.user?.userId
-    if (!userId) throw new Error('Usuario no autenticado')
+    if (!userId) throw new NotAuthenticated('Usuario no autenticado')
     const record = await ctx.service.model.findUnique({ where: { id: ctx.id } })
-    if (!record) throw new Error('Registro no encontrado')
+    if (!record) throw new NotFound('Registro no encontrado')
     if (record[field] !== userId) {
-      throw new Error('No tienes permiso para modificar este recurso')
+      throw new Forbidden('No tienes permiso para modificar este recurso')
     }
     return ctx
   }

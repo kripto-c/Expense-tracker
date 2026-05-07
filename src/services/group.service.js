@@ -2,6 +2,7 @@ const BaseService = require('./base.service')
 const prisma = require('../prisma')
 const validate = require('../hooks/validate')
 const { assignCreator, checkOwnership } = require('../hooks/authorize')
+const { addCreatorAsMember } = require('../hooks/group.hook')
 const { POST, PATCH } = require('../schemas/group.schema')
 
 class GroupService extends BaseService {
@@ -10,6 +11,7 @@ class GroupService extends BaseService {
 
     // Hooks para create: validación + asignar creador
     this.before('create', validate(POST), assignCreator('userId'))
+    this.after('create', addCreatorAsMember)
 
     // Hooks para patch: validación + verificar propiedad
     this.before('patch', validate(PATCH), checkOwnership('userId'))

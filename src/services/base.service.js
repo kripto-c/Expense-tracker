@@ -16,7 +16,7 @@ class BaseService {
     this.serviceName = serviceName
     this.app = app
     // Metodos a excluir de los permisos automáticos
-    this.excludeMethods = excludeMethods
+    this.excludeMethods = Array.isArray(excludeMethods) ? excludeMethods : []
     this.beforeHooks = {
       find: [],
       get: [],

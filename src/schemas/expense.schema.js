@@ -12,3 +12,8 @@ const PATCH = Joi.object({
   amount: Joi.number().positive().label('Monto'),
   date: Joi.date().label('Fecha'),
 }).min(1)
+
+module.exports = {
+  POST,
+  PATCH,
+}

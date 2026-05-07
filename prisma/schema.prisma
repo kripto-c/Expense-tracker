@@ -43,7 +43,6 @@ model Role {
   updatedAt   DateTime @updatedAt
 
   userRoles    UserRole[]
-  groupMembers GroupMember[]
 }
 
 model UserRole {
@@ -61,12 +60,11 @@ model GroupMember {
   id        String   @id @default(uuid())
   userId    String
   groupId   String
-  roleId    String
   joinedAt  DateTime @default(now())
+  role      String   @default("member") // 'admin' o 'member'
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  role  Role  @relation(fields: [roleId], references: [id])
 
   @@unique([userId, groupId])
 }
