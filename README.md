@@ -1,5 +1,3 @@
-Aquí tienes el README actualizado con los últimos cambios: **simplificación de `GroupMember`**, **eliminación de dependencia con `Role`** y **sistema de populate** al estilo Feathers.
-
 ```markdown
 # Expense Tracker - Arquitectura Backend
 
