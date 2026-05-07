@@ -3,7 +3,6 @@ const prisma = require('../prisma')
 const validate = require('../hooks/validate')
 const { assignCreator } = require('../hooks/authorize')
 const { POST, PATCH } = require('../schemas/roles.schema')
-const { checkPermission } = require('../hooks/permissions')
 
 class RolesService extends BaseService {
   constructor(app) {

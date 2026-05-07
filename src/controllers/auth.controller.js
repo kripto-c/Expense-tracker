@@ -4,7 +4,7 @@ const { NotAuthenticated, BadRequest, Conflict } = require('../errors')
 const EXPIRES_IN = process.env.EXPIRES_IN
 exports.register = async (req, res, next) => {
   try {
-    const userService = req.app.getService('user')
+    const userService = req.services.user
     const { email, password } = req.body
     if (!email || !password) {
       return next(new BadRequest('Email y password requeridos'))
@@ -29,7 +29,7 @@ exports.register = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   try {
-    const userService = req.app.getService('user')
+    const userService = req.services.user
     const { email, password } = req.body
     if (!email || !password) {
       return next(new BadRequest('Email y password requeridos'))

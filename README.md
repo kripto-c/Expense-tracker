@@ -52,7 +52,8 @@ expense-tracker/
 │ ├── middlewares/
 │ │ ├── setProvider.js # Asigna req.provider = 'rest'
 │ │ ├── auth.global.js # Verifica JWT y asigna req.user
-│ │ └── context.middleware.js # Inyecta req.user en AsyncLocalStorage (solo user)
+│ │ ├── context.middleware.js # Inyecta req.user en AsyncLocalStorage (solo user)
+│ │ └── attachServices.js # (Opcional) Proxy para inyectar provider/user automáticamente
 │ ├── schemas/
 │ │ ├── group.schema.js
 │ │ ├── expense.schema.js
@@ -63,16 +64,15 @@ expense-tracker/
 │ │ ├── user.hook.js # generateUserName, hashPassword, assignDefaultRole
 │ │ ├── group.hook.js # addCreatorAsMember
 │ │ ├── expense.hook.js # calculateEqualShares, createExpenseShares, restrictToPayer
-│ │ ├── populate.js # Hook para popular relaciones usando servicios internos
+│ │ ├── populate.js # Hook para popular relaciones (uno a uno)
+│ │ ├── populateMany.js # Hook para popular relaciones uno a muchos
 │ │ └── permissions.js # checkPermission (usa provider para distinguir llamadas)
 │ ├── context.js # AsyncLocalStorage: solo getCurrentUser()
 │ ├── prisma.js # Cliente Prisma con adapter (PostgreSQL)
 │ └── server.js # Configura Express, middlewares, monta rutas /api
 └── node_modules/
 
-```
-
-```
+````
 
 ## 🔐 Autenticación y contexto
 
@@ -80,8 +80,8 @@ expense-tracker/
 
 ```js
 // src/middlewares/setProvider.js
-req.provider = 'rest'
-```
+req.provider = 'rest';
+````
 
 ### Middleware `globalAuth`
 
@@ -107,6 +107,7 @@ runWithContext({ user: req.user }, next)
 ```
 
 **Ventaja:** Los servicios pueden obtener el usuario con `getCurrentUser()` sin que el controlador tenga que pasarlo manualmente.
+**Nota:** El `provider` se inyecta manualmente en los controladores (o mediante `attachServices`) porque no debe persistir globalmente para no contaminar llamadas internas.
 
 ## 🧠 Servicio base (BaseService)
 
@@ -170,7 +171,8 @@ Solo necesita definir `serviceName`; los permisos se aplican automáticamente.
 1. Petición → `setProvider` asigna `req.provider = 'rest'`.
 2. `globalAuth` → asigna `req.user`.
 3. `contextMiddleware` → inyecta `req.user` en `AsyncLocalStorage` (el **provider** no se guarda).
-4. El controlador llama al servicio **pasando explícitamente** `{ provider: req.provider, user: req.user }` (o solo `provider` si el usuario lo obtiene del contexto).
+4. El controlador llama al servicio **pasando explícitamente** `provider: req.provider` (y `user: req.user` si no se usa `getCurrentUser`).
+   O, alternativamente, se usa un middleware `attachServices` que inyecta estos valores automáticamente (sin necesidad de repetirlos en cada controlador).
 5. `BaseService.create` → obtiene el usuario con `getCurrentUser()` y lo añade a `context.user`; los `params` recibidos se usan tal cual (sin mezclar).
 6. Se ejecutan hooks:
    - `checkPermission` evalúa `context.params.provider`: si es `'rest'`, exige autenticación y permisos; si es `undefined` (llamada interna), confía.
@@ -179,36 +181,62 @@ Solo necesita definir `serviceName`; los permisos se aplican automáticamente.
 
 ## 🧩 Sistema de `populate` (similar a Feathers)
 
-Se implementó un hook genérico `populate` que permite enriquecer los resultados de un servicio con datos de otros servicios (relaciones).
-El hook se configura en el servicio hijo (ej. `ExpenseService`) y se ejecuta en `after('get')` y/o `after('find')`.
+Se implementaron hooks genéricos para popular relaciones:
 
-### Uso básico
+- `populate`: para relaciones uno a uno (ej. obtener el grupo de un gasto).
+- `populateMany`: para relaciones uno a muchos (ej. obtener los miembros de un grupo).
+
+### Uso básico en `ExpenseService`
 
 ```javascript
 const populate = require('../hooks/populate')
 
 this.after(
-  'get',
+  'find',
   populate({
     include: [
       {
-        service: 'group', // servicio registrado
-        name: 'group', // campo donde se adjuntará el objeto
-        parentField: 'groupId', // campo en el resultado original
-        childField: 'id', // campo en el servicio relacionado (por defecto 'id')
-        query: { $select: ['id', 'name'] }, // proyección de campos
+        service: 'group',
+        name: 'group',
+        parentField: 'groupId',
+        childField: 'id',
+        query: { $select: ['id', 'name'] },
+      },
+      {
+        service: 'user',
+        name: 'payer',
+        parentField: 'paidById',
+        childField: 'id',
+        query: { $select: ['id', 'email', 'name'] },
       },
     ],
   }),
 )
 ```
 
-### Implementación interna
+### Uso de `populateMany` en `GroupService`
 
-- El hook `populate` itera sobre los elementos del resultado (`context.result.data` o `context.result`).
-- Para cada relación, obtiene el servicio mediante `context.app.getService()`.
-- Realiza una llamada interna (`provider: undefined`) a `service.find` filtrando por `childField` y aplicando la `query` (soporta `$select`, etc.).
-- Adjunta el objeto relacionado en el campo `name`.
+```javascript
+const populateMany = require('../hooks/populateMany')
+
+this.after(
+  'find',
+  populateMany({
+    service: 'groupMember',
+    name: 'members',
+    parentField: 'id',
+    childField: 'groupId',
+    query: { $select: ['userId', 'role'] },
+    nestedPopulate: {
+      // opcional: segundo nivel
+      service: 'user',
+      field: 'user',
+      foreignKey: 'userId',
+      query: { $select: ['id', 'name', 'email'] },
+    },
+  }),
+)
+```
 
 ### Ventajas
 
@@ -232,14 +260,14 @@ this.after(
 
 - Autenticación JWT funcionando.
 - Contexto `AsyncLocalStorage` **solo para el usuario** (sin contaminación de `provider`).
-- Controladores pasan explícitamente `provider: req.provider` y `user: req.user`.
+- Controladores pasan explícitamente `provider: req.provider` y `user: req.user` (o usan `attachServices` para inyección automática).
 - `BaseService.find` soporta filtros `where` a partir de `query` (ej. `{ name: 'user' }`).
 - Llamadas internas (desde hooks) no llevan `provider`, por lo que `checkPermission` las considera internas y no exige autenticación.
 - CRUD de grupos protegido (solo creador puede modificar).
 - CRUD de gastos con división igualitaria automática (soporta múltiples miembros).
 - CRUD de roles protegido con permiso `manage:roles`.
 - Parámetros de query (`$limit`, `$skip`, `$sort`, `$select`) probados.
-- Sistema de `populate` implementado y funcionando.
+- Sistema de `populate` implementado y funcionando (incluye relaciones anidadas).
 - El sistema de permisos es automático para cualquier nuevo servicio que herede de `BaseService`.
 
 ## 🧪 Próximos pasos (no implementados aún)
@@ -267,4 +295,8 @@ this.after(
 
 ---
 
-_Última actualización: 2026-05-06_
+_Última actualización: 2026-05-07_
+
+```
+
+```

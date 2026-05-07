@@ -4,6 +4,10 @@ const populate = (schema) => {
   return async (context) => {
     if (!context.result) return context
 
+    if (context.params.provider === undefined) {
+      return context
+    }
+
     const isArray = Array.isArray(context.result.data)
     const items = isArray ? context.result.data : [context.result]
 

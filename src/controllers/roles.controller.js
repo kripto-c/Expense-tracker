@@ -1,7 +1,6 @@
 exports.find = async (req, res, next) => {
   try {
-    const roleService = req.app.getService('role')
-    const roles = await roleService.find({ query: req.query })
+    const roles = await req.services.role.find({ query: req.query })
     res.json(roles)
   } catch (error) {
     next(error)
@@ -10,8 +9,7 @@ exports.find = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
   try {
-    const roleService = req.app.getService('role')
-    const role = await roleService.get(req.params.id)
+    const role = await req.services.role.get(req.params.id)
     if (!role) return res.status(404).json({ error: 'Role not found' })
     res.json(role)
   } catch (error) {
@@ -21,8 +19,7 @@ exports.get = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
-    const roleService = req.app.getService('role')
-    const role = await roleService.create(req.body)
+    const role = await req.services.role.create(req.body)
     res.status(201).json(role)
   } catch (error) {
     next(error)
@@ -31,8 +28,7 @@ exports.create = async (req, res, next) => {
 
 exports.patch = async (req, res, next) => {
   try {
-    const roleService = req.app.getService('role')
-    const role = await roleService.patch(req.params.id, req.body)
+    const role = await req.services.role.patch(req.params.id, req.body)
     res.json(role)
   } catch (error) {
     next(error)
@@ -41,8 +37,7 @@ exports.patch = async (req, res, next) => {
 
 exports.remove = async (req, res, next) => {
   try {
-    const roleService = req.app.getService('role')
-    await roleService.remove(req.params.id)
+    const role = await req.services.role.remove(req.params.id)
     res.status(204).send()
   } catch (error) {
     next(error)

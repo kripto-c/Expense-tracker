@@ -11,6 +11,7 @@ const contextMiddleware = require('./middlewares/context.middleware')
 const { errorHandler } = require('./middlewares/error.middleware')
 const { registerServices } = require('./services')
 const setProvider = require('./middlewares/setProvider.middleware')
+const attachServices = require('./middlewares/attachServices.middleware')
 
 app.use(cors())
 app.use(express.json())
@@ -18,6 +19,7 @@ app.use(express.json())
 // Middleware global de autenticación
 app.use(setProvider)
 app.use(globalAuth)
+app.use(attachServices)
 app.use(contextMiddleware) // a partir de aquí, dentro de la misma petición, getCurrentUser() devolverá el usuario
 
 //Servicios
