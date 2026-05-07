@@ -70,7 +70,9 @@ expense-tracker/
 │ └── server.js # Configura Express, middlewares, monta rutas /api
 └── node_modules/
 
-````
+```
+
+```
 
 ## 🔐 Autenticación y contexto
 
@@ -78,8 +80,8 @@ expense-tracker/
 
 ```js
 // src/middlewares/setProvider.js
-req.provider = 'rest';
-````
+req.provider = 'rest'
+```
 
 ### Middleware `globalAuth`
 
