@@ -9,26 +9,36 @@ function attachServices(req, res, next) {
     req.services[name] = new Proxy(service, {
       get(target, prop) {
         const originalMethod = target[prop]
-        if (typeof originalMethod === 'function') {
-          return function (...args) {
-            // Para métodos que esperan (data, params):
-            if (prop === 'create' || prop === 'patch') {
-              // args[0] es data, args[1] podría ser params si se pasa
-              let params = baseParams
-              if (args.length > 1 && typeof args[1] === 'object') {
-                params = { ...args[1], ...baseParams }
-              }
-              return originalMethod.call(target, args[0], params)
-            }
-            // Para find, get, remove: el primer argumento es id o query, el segundo son params
+        if (typeof originalMethod !== 'function') return originalMethod
+
+        return function (...args) {
+          // Para create y patch: firma (data, params)
+          if (prop === 'create' || prop === 'patch') {
             let params = baseParams
             if (args.length > 1 && typeof args[1] === 'object') {
               params = { ...args[1], ...baseParams }
             }
-            return originalMethod.call(target, ...args, params)
+            return originalMethod.call(target, args[0], params)
           }
+
+          // Para find: firma (params) → un solo argumento
+          if (prop === 'find') {
+            const mergedParams = { ...(args[0] || {}), ...baseParams }
+            return originalMethod.call(target, mergedParams)
+          }
+
+          // Para get y remove: firma (id, params)
+          if (prop === 'get' || prop === 'remove') {
+            let params = baseParams
+            if (args.length > 1 && typeof args[1] === 'object') {
+              params = { ...args[1], ...baseParams }
+            }
+            return originalMethod.call(target, args[0], params)
+          }
+
+          // Para otros métodos (si los hay) por defecto
+          return originalMethod.call(target, ...args)
         }
-        return originalMethod
       },
     })
   }

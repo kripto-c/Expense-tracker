@@ -8,7 +8,7 @@ const populate = require('../hooks/populate')
 
 class ExpenseService extends BaseService {
   constructor(app) {
-    super(prisma.expense, 'expense', app)
+    super(prisma.expense, 'expenses', app)
 
     this.after(
       'find',
