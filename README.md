@@ -1,4 +1,3 @@
-```markdown
 # Expense Tracker - Arquitectura Backend
 
 ## Proyecto
@@ -9,79 +8,128 @@ Construida **sin frameworks mágicos** (Feathers, Nest, etc.) para entender las 
 ## Stack
 
 - Node.js + Express (mínimo, sin magia)
+- TypeScript
 - PostgreSQL + Prisma (con adapter para Prisma 7)
 - JWT + bcrypt (manual)
 - Joi (validación)
 - AsyncLocalStorage (solo para el usuario autenticado)
+- pnpm (gestor de paquetes)
 - Socket.io (pendiente)
 
-## Estructura de carpetas
+## Primeros pasos
+
+```bash
+# Instalar dependencias
+pnpm install
+
+# Generar cliente Prisma
+pnpm db:generate
+
+# Aplicar migraciones a la base de datos
+pnpm db:push
+
+# Poblar la base de datos con datos iniciales (roles, usuarios)
+pnpm db:seed
+
+# Iniciar en desarrollo (con nodemon + ts-node)
+pnpm dev
+
+# Compilar TypeScript
+pnpm build
+
+# Iniciar producción (desde dist/)
+pnpm start
 ```
 
+## Scripts disponibles
+
+| Script | Descripción |
+|--------|-------------|
+| `pnpm dev` | Inicia el servidor en modo desarrollo |
+| `pnpm build` | Compila TypeScript a JavaScript en `dist/` |
+| `pnpm start` | Inicia el servidor desde `dist/` |
+| `pnpm db:generate` | Genera el cliente Prisma |
+| `pnpm db:push` | Aplica los cambios del schema a la DB |
+| `pnpm db:seed` | Ejecuta el seed para crear datos iniciales |
+
+## Estructura de carpetas
+
+```
 expense-tracker/
 ├── readme.md
 ├── package.json
-├── prisma.config.js # Configuración de Prisma 7 (datasource URL)
+├── tsconfig.json
+├── prisma.config.js
 ├── .env
 ├── prisma/
-│ ├── migrations/ # Migraciones generadas
-│ ├── seed.js # Datos iniciales (roles, usuarios, permisos)
-│ └── schema.prisma # Modelos: User, Group, Role, UserRole, GroupMember, Expense, ExpenseShare
+│   ├── migrations/
+│   ├── seed.js
+│   └── schema.prisma
 ├── src/
-│ ├── routes/
-│ │ ├── auth.routes.js
-│ │ ├── expense.routes.js
-│ │ ├── group.routes.js
-│ │ ├── role.routes.js
-│ │ └── index.js # Agrupa y exporta todas las rutas bajo /api
-│ ├── generated/ # (carpeta generada por Prisma, no versionar)
-│ ├── services/
-│ │ ├── base.service.js # Clase BaseService: hooks, permisos automáticos, query params, filtros where
-│ │ ├── user.service.js
-│ │ ├── group.service.js
-│ │ ├── expense.service.js
-│ │ ├── role.service.js
-│ │ ├── groupMember.service.js # Servicio interno (sin permisos)
-│ │ └── expenseShare.service.js # Servicio interno (sin permisos)
-│ ├── controllers/
-│ │ ├── auth.controller.js
-│ │ ├── group.controller.js
-│ │ ├── expense.controller.js
-│ │ ├── role.controller.js
-│ │ └── groupMember.controller.js # Endpoints para manejar miembros de grupo
-│ ├── middlewares/
-│ │ ├── setProvider.js # Asigna req.provider = 'rest'
-│ │ ├── auth.global.js # Verifica JWT y asigna req.user
-│ │ ├── context.middleware.js # Inyecta req.user en AsyncLocalStorage (solo user)
-│ │ └── attachServices.js # (Opcional) Proxy para inyectar provider/user automáticamente
-│ ├── schemas/
-│ │ ├── group.schema.js
-│ │ ├── expense.schema.js
-│ │ └── role.schema.js
-│ ├── hooks/
-│ │ ├── validate.js # Hook que aplica validación Joi
-│ │ ├── authorize.js # assignCreator, checkOwnership
-│ │ ├── user.hook.js # generateUserName, hashPassword, assignDefaultRole
-│ │ ├── group.hook.js # addCreatorAsMember
-│ │ ├── expense.hook.js # calculateEqualShares, createExpenseShares, restrictToPayer
-│ │ ├── populate.js # Hook para popular relaciones (uno a uno)
-│ │ ├── populateMany.js # Hook para popular relaciones uno a muchos
-│ │ └── permissions.js # checkPermission (usa provider para distinguir llamadas)
-│ ├── context.js # AsyncLocalStorage: solo getCurrentUser()
-│ ├── prisma.js # Cliente Prisma con adapter (PostgreSQL)
-│ └── server.js # Configura Express, middlewares, monta rutas /api
+│   ├── routes/
+│   │   ├── auth.routes.ts
+│   │   ├── expense.routes.ts
+│   │   ├── group.routes.ts
+│   │   ├── role.routes.ts
+│   │   └── index.ts
+│   ├── services/
+│   │   ├── base.service.ts
+│   │   ├── user.service.ts
+│   │   ├── group.service.ts
+│   │   ├── expense.service.ts
+│   │   ├── role.service.ts
+│   │   ├── groupMember.service.ts
+│   │   ├── expenseShare.service.ts
+│   │   ├── userRole.service.ts
+│   │   └── index.ts
+│   ├── controllers/
+│   │   ├── auth.controller.ts
+│   │   ├── group.controller.ts
+│   │   ├── expense.controller.ts
+│   │   ├── role.controller.ts
+│   │   └── groupMember.controller.ts
+│   ├── middlewares/
+│   │   ├── setProvider.middleware.ts
+│   │   ├── auth.global.ts
+│   │   ├── context.middleware.ts
+│   │   ├── attachServices.middleware.ts
+│   │   └── error.middleware.ts
+│   ├── schemas/
+│   │   ├── group.schema.ts
+│   │   ├── expense.schema.ts
+│   │   └── roles.schema.ts
+│   ├── hooks/
+│   │   ├── validate.ts
+│   │   ├── authorize.ts
+│   │   ├── user.hook.ts
+│   │   ├── group.hook.ts
+│   │   ├── expense.hook.ts
+│   │   ├── populate.ts
+│   │   ├── populateMany.ts
+│   │   └── permissions.ts
+│   ├── types/
+│   │   ├── context.ts
+│   │   ├── errors.ts
+│   │   ├── express.ts
+│   │   ├── services.ts
+│   │   └── index.ts
+│   ├── app.ts
+│   ├── context.ts
+│   ├── errors.ts
+│   ├── prisma.ts
+│   └── server.ts
+├── dist/              # Compilación TypeScript (no versionar)
 └── node_modules/
-
-````
+```
 
 ## 🔐 Autenticación y contexto
 
 ### Middleware `setProvider`
 
-```js
-// src/middlewares/setProvider.js
+```typescript
+// src/middlewares/setProvider.middleware.ts
 req.provider = 'rest';
-````
+```
 
 ### Middleware `globalAuth`
 
@@ -91,7 +139,7 @@ req.provider = 'rest';
 
 ### Contexto con `AsyncLocalStorage`
 
-**Archivo `src/context.js`**:
+**Archivo `src/context.ts`**:
 
 - `runWithContext(store, callback)` — ejecuta callback con el store.
 - `getCurrentUser()` — recupera el usuario autenticado desde cualquier punto del código (sin pasarlo como parámetro).
@@ -100,9 +148,9 @@ req.provider = 'rest';
 
 ### Middleware de contexto
 
-`src/middlewares/context.middleware.js`:
+`src/middlewares/context.middleware.ts`:
 
-```js
+```typescript
 runWithContext({ user: req.user }, next)
 ```
 
@@ -122,10 +170,10 @@ runWithContext({ user: req.user }, next)
 
 ### Ejemplo de servicio concreto (`RoleService`)
 
-```javascript
+```typescript
 class RoleService extends BaseService {
-  constructor(app) {
-    super(prisma.role, 'roles', [], app)
+  constructor(app: Application) {
+    super(prisma.role, 'roles', app)
     this.before('create', validate(roleCreateSchema))
     this.before('patch', validate(roleUpdateSchema))
   }
@@ -151,10 +199,10 @@ Solo necesita definir `serviceName`; los permisos se aplican automáticamente.
 - En `GroupMember` se usa un campo `role` de tipo `String` (`'admin'` o `'member'`).
   **No depende de la tabla `Role`** – simplifica y evita mezclar conceptos.
 
-### Lógica de permisos (`src/hooks/permissions.js`)
+### Lógica de permisos (`src/hooks/permissions.ts`)
 
 - `getUserPermissions(userId)`: obtiene todos los roles del usuario y combina permisos en un objeto `{ subject: [actions...] }`.
-- `hasPermission(perms, action, subject)`: verifica si el usuario tiene `action` sobre `subject` o `manage:subject` o `manage:all`.
+- `hasPermission(perms, action, subject)`: verifica si el usuario tiene `action` sobre `subject` o `manage:all`.
 - `checkPermission(action, subject)`: hook que:
   1. **Distingue llamadas internas vs externas** mediante `context.params.provider`:
      - Si `provider === undefined` → llamada interna → confía y pasa.
@@ -188,8 +236,8 @@ Se implementaron hooks genéricos para popular relaciones:
 
 ### Uso básico en `ExpenseService`
 
-```javascript
-const populate = require('../hooks/populate')
+```typescript
+import populate from '../hooks/populate'
 
 this.after(
   'find',
@@ -216,8 +264,8 @@ this.after(
 
 ### Uso de `populateMany` en `GroupService`
 
-```javascript
-const populateMany = require('../hooks/populateMany')
+```typescript
+import populateMany from '../hooks/populateMany'
 
 this.after(
   'find',
@@ -265,10 +313,12 @@ this.after(
 - Llamadas internas (desde hooks) no llevan `provider`, por lo que `checkPermission` las considera internas y no exige autenticación.
 - CRUD de grupos protegido (solo creador puede modificar).
 - CRUD de gastos con división igualitaria automática (soporta múltiples miembros).
-- CRUD de roles protegido con permiso `manage:roles`.
+- CRUD de roles protegido con permiso `manage:roles` o `manage:all`.
 - Parámetros de query (`$limit`, `$skip`, `$sort`, `$select`) probados.
 - Sistema de `populate` implementado y funcionando (incluye relaciones anidadas).
 - El sistema de permisos es automático para cualquier nuevo servicio que herede de `BaseService`.
+- Proyecto migrated a TypeScript.
+- Sistema de tipos organizado en `src/types/`.
 
 ## 🧪 Próximos pasos (no implementados aún)
 
@@ -282,21 +332,19 @@ this.after(
 - **Diferencia entre roles globales y roles de grupo**:
   _Roles globales_ (tabla `UserRole`) → permisos en toda la plataforma.
   _Roles de grupo_ (`GroupMember.role`) → solo para distinguir administradores de miembros dentro de un grupo. No utilizan el sistema de permisos global.
+- **Permisos especiales**: El rol `superadmin` tiene `actions: ["manage"]` y `subject: ["all"]`, lo que otorga acceso total sin necesidad de permisos específicos.
 - **Permisos**: se basan en `subject`. Usa los mismos nombres de sujeto que los servicios (`groups`, `expenses`, `roles`, `users`).
 - **Cómo añadir un nuevo servicio**:
   1. Crear modelo en Prisma.
   2. Crear servicio heredando de `BaseService` con el `serviceName` adecuado.
-  3. Registrar el servicio en `src/services/index.js`.
+  3. Registrar el servicio en `src/services/index.ts`.
   4. Crear controlador que obtenga el servicio mediante `req.app.getService('...')` y pase explícitamente `provider: req.provider` (y `user: req.user` si es necesario).
   5. Definir rutas.
   6. Los permisos se aplican automáticamente según el `serviceName`.
 - **Llamadas internas**: desde hooks o desde otros servicios, **no pases `provider`**. El `BaseService` ya se encarga de que `params.provider === undefined`, y `checkPermission` lo tratará como interno.
 - **Populate**: configúralo en los servicios que necesiten enriquecer resultados. Utiliza los servicios internos para obtener relaciones y evita acceder directamente a Prisma desde los hooks.
+- **TypeScript**: Los tipos se encuentran organizados en `src/types/`. Evita usar `any` a menos que sea estrictamente necesario.
 
 ---
 
-_Última actualización: 2026-05-07_
-
-```
-
-```
+_Ultima actualización: 2026-05-16_

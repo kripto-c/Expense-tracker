@@ -1,16 +1,27 @@
 {
   "name": "expense-tracker",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "API REST para gestión de gastos compartidos",
+  "main": "dist/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon --exec ts-node src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "node prisma/seed.js"
   },
-  "keywords": [],
+  "keywords": [
+    "expense",
+    "tracker",
+    "api",
+    "express",
+    "prisma"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "packageManager": "pnpm@11.1.2",
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
@@ -25,6 +36,22 @@
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "@types/bcrypt": "^5.0.2",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "@types/joi": "^17.2.3",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22.13.4",
+    "@types/pg": "^8.20.0",
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "bcrypt",
+      "prisma"
+    ]
   }
 }
