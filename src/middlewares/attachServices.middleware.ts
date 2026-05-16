@@ -31,13 +31,22 @@ function attachServices(req: Request, _res: Response, next: NextFunction): void 
 
         // Retornar una función que modifica los parámetros automáticamente
         return function (...args: unknown[]) {
-          // Para create y patch: firma (data, params)
-          if (prop === 'create' || prop === 'patch') {
+          // Para create: firma (data, params)
+          if (prop === 'create') {
             let params = baseParams;
             if (args.length > 1 && typeof args[1] === 'object') {
               params = { ...(args[1] as Record<string, unknown>), ...baseParams };
             }
             return originalMethod.call(target, args[0], params);
+          }
+
+          // Para patch: firma (id, data, params) - el data está en args[1], params en args[2]
+          if (prop === 'patch') {
+            let params = baseParams;
+            if (args.length > 2 && typeof args[2] === 'object') {
+              params = { ...(args[2] as Record<string, unknown>), ...baseParams };
+            }
+            return originalMethod.call(target, args[0], args[1], params);
           }
 
           // Para find: firma (params) → un solo argumento
